@@ -6,6 +6,7 @@ Das CleanUpUserData-Modul erweitert VuFind um einen Wartungsbefehl zur Datenbank
 
 - Bereinigen von Benutzerdatensätzen, deren letzter Login älter als eine definierte Stundenanzahl ist
 - Konfigurierbare Zeitgrenze über den Parameter `--hours` (Standardwert: 24 Stunden)
+- Automatisches Abmelden betroffener Nutzer (Invalidieren einer eventuell noch aktiven Session), bevor ihre Daten bereinigt werden
 - Bereitstellung eines Bash-Skripts für den einfachen Einsatz als Cronjob
 
 ## Installation
@@ -24,6 +25,9 @@ Das Modul bietet eine Standardkonfiguration, die in das `local`-Verzeichnis von 
 [Global]
 default_hours = 24
 
+[Logout]
+enabled = true
+
 [CleanUp]
 firstname     = ''
 lastname      = ''
@@ -32,6 +36,14 @@ created       = '2000-01-01 00:00:00'
 last_language = ''
 email         = ''
 ```
+
+### Abmelden betroffener Nutzer (`[Logout]`)
+Standardmäßig (`enabled = true`) wird für jeden Nutzer, dessen Daten bereinigt werden, versucht, eine eventuell noch aktive Session zu invalidieren, damit er nicht mitten in seiner Sitzung mit bereinigten Profildaten weiterarbeitet. Da keines der VuFind-Session-Backends Sessions anhand einer Nutzer-ID nachschlagen kann, wird dazu je nach konfiguriertem `[Session] type` in `config.ini` vorgegangen:
+
+- **File** und **Database**: Sessions werden durchsucht (Verzeichnis-Scan bzw. Tabellen-Scan) und bei Treffer gezielt zerstört.
+- **Memcache** oder wenn `[Session] secure = true` gesetzt ist: eine gezielte Zuordnung ist technisch nicht zuverlässig möglich (keine Schlüsselauflistung bzw. verschlüsselte Session-Daten) — es wird lediglich eine Warnung ausgegeben, die betroffene Session bleibt unangetastet, die übrige Datenbereinigung läuft normal weiter.
+
+Über `enabled = false` kann das automatische Abmelden deaktiviert werden.
 
 ## Verwendung
 ### Konsolenbefehl
@@ -81,11 +93,17 @@ CleanUpUserData/
 ├── scripts/
 │   └── clean_up_user_data.sh                          # Bash-Skript für den Aufruf
 ├── src/CleanUpUserData/
-│   └── Command/Util/
-│       ├── CleanUpUserDataCommand.php                 # Konsolenbefehl
-│       └── CleanUpUserDataCommandFactory.php          # Factory für den Konsolenbefehl
-├── tests/unit-tests/src/CleanUpUserData/Command/Util/
-│   └── CleanUpUserDataCommandTest.php                 # Test für den Konsolenbefehl
+│   ├── Command/Util/
+│   │   ├── CleanUpUserDataCommand.php                 # Konsolenbefehl
+│   │   └── CleanUpUserDataCommandFactory.php          # Factory für den Konsolenbefehl
+│   └── Session/
+│       ├── SessionInvalidator.php                     # Abmelden betroffener Nutzer
+│       └── SessionInvalidatorFactory.php              # Factory für den SessionInvalidator
+├── tests/unit-tests/src/CleanUpUserData/
+│   ├── Command/Util/
+│   │   └── CleanUpUserDataCommandTest.php              # Test für den Konsolenbefehl
+│   └── Session/
+│       └── SessionInvalidatorTest.php                  # Test für den SessionInvalidator
 ├── .gitignore
 ├── Module.php                                         # Modulklasse
 └── README.md

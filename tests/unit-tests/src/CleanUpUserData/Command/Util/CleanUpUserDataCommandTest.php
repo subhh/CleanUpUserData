@@ -5,7 +5,7 @@
      *
      * PHP version 7
      *
-     * Copyright (C) Villanova University 2020.
+     * Copyright (C) Qcovery 2026.
      *
      * This program is free software; you can redistribute it and/or modify
      * it under the terms of the GNU General Public License version 2,
@@ -31,6 +31,7 @@ namespace CleanUpUserDataTest\Command\Util;
 
 use Symfony\Component\Console\Tester\CommandTester;
 use CleanUpUserData\Command\Util\CleanUpUserDataCommand;
+use CleanUpUserData\Session\SessionInvalidator;
 
 /**
  * CleanUpUserDataCommand test.
@@ -147,7 +148,12 @@ class CleanUpUserDataCommandTest extends \PHPUnit\Framework\TestCase
                 'email' => '',
             ]
         ]);
-        $command = new CleanUpUserDataCommand($table, $config);
+        $sessionInvalidator = $this->createMock(SessionInvalidator::class);
+        $sessionInvalidator->expects($this->once())
+            ->method('invalidateForUsers')
+            ->with([1, 2, 3], null)
+            ->willReturn(0);
+        $command = new CleanUpUserDataCommand($table, $config, $sessionInvalidator);
         $command->cleanup();
 
         // Fetch users via select and verify fields are cleared afterwards.
@@ -171,19 +177,48 @@ class CleanUpUserDataCommandTest extends \PHPUnit\Framework\TestCase
     {
         $table = $this->getMockBuilder(\VuFind\Db\Table\User::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['update'])
+            ->onlyMethods(['update', 'select'])
             ->getMock();
         $table->expects($this->once())
             ->method('update')
             ->will($this->returnValue(5));
+        $table->method('select')->willReturn([]);
+
+        $sessionInvalidator = $this->createMock(SessionInvalidator::class);
+        $sessionInvalidator->expects($this->once())
+            ->method('invalidateForUsers')
+            ->with([], $this->isInstanceOf(\Symfony\Component\Console\Output\OutputInterface::class))
+            ->willReturn(2);
 
         $config = new \Laminas\Config\Config(['Global' => ['default_hours' => 24]]);
-        $command = new CleanUpUserDataCommand($table, $config);
+        $command = new CleanUpUserDataCommand($table, $config, $sessionInvalidator);
         $commandTester = new CommandTester($command);
         $commandTester->execute([]);
 
-        $expected = "5 row(s) in user table cleaned up successfully. (24 hours)\n";
+        $expected = "5 row(s) in user table cleaned up successfully. (24 hours) 2 session(s) invalidated.\n";
         $this->assertEquals($expected, $commandTester->getDisplay());
         $this->assertEquals(0, $commandTester->getStatusCode());
+    }
+
+    /**
+     * Test that disabling [Logout] enabled skips session invalidation entirely.
+     *
+     * @return void
+     */
+    public function testLogoutDisabledSkipsInvalidation()
+    {
+        $table = $this->getMockBuilder(\VuFind\Db\Table\User::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['update', 'select'])
+            ->getMock();
+        $table->method('update')->willReturn(0);
+        $table->expects($this->never())->method('select');
+
+        $sessionInvalidator = $this->createMock(SessionInvalidator::class);
+        $sessionInvalidator->expects($this->never())->method('invalidateForUsers');
+
+        $config = new \Laminas\Config\Config(['Logout' => ['enabled' => false]]);
+        $command = new CleanUpUserDataCommand($table, $config, $sessionInvalidator);
+        $command->cleanup();
     }
 }

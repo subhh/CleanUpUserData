@@ -12,6 +12,11 @@ $config = [
             ],
         ],
     ],
+    'service_manager' => [
+        'factories' => [
+            'CleanUpUserData\Session\SessionInvalidator' => 'CleanUpUserData\Session\SessionInvalidatorFactory',
+        ],
+    ],
 ];
 
 return $config;

@@ -5,7 +5,7 @@
  *
  * PHP version 7
  *
- * Copyright (C) Villanova University 2020.
+ * Copyright (C) Qcovery 2026.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -29,6 +29,7 @@
 
 namespace CleanUpUserData\Command\Util;
 
+use CleanUpUserData\Session\SessionInvalidator;
 use Laminas\Config\Config;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -68,18 +69,39 @@ class CleanUpUserDataCommand extends Command
      */
     protected $mainConfig;
 
+    /**
+     * Session invalidator, used to log out affected users
+     *
+     * @var SessionInvalidator
+     */
+    protected $sessionInvalidator;
+
+    /**
+     * Number of sessions invalidated during the most recent cleanup() call
+     *
+     * @var int
+     */
+    protected $invalidatedSessions = 0;
 
     /**
      * Constructor
      *
-     * @param User        $table      User table object
-     * @param Config      $mainConfig Main framework configuration
-     * @param string|null $name       The name of the command; passing null means it
-     * must be set in configure()
+     * @param User               $table              User table object
+     * @param Config             $mainConfig         Main framework configuration
+     * @param SessionInvalidator $sessionInvalidator Session invalidator, used to
+     * log out affected users
+     * @param string|null        $name               The name of the command;
+     * passing null means it must be set in configure()
      */
-    public function __construct(User $table, Config $mainConfig, string $name = null) {
+    public function __construct(
+        User $table,
+        Config $mainConfig,
+        SessionInvalidator $sessionInvalidator,
+        string $name = null
+    ) {
         $this->userTable = $table;
         $this->mainConfig = $mainConfig;
+        $this->sessionInvalidator = $sessionInvalidator;
         parent::__construct($name);
     }
 
@@ -104,17 +126,29 @@ class CleanUpUserDataCommand extends Command
     /**
      * Clean up user data.
      *
-     * @param int $hours Hours to keep user data.
+     * @param int                  $hours  Hours to keep user data.
+     * @param OutputInterface|null $output Console output, used to surface
+     * warnings from the session invalidation step
      *
      * @return int
      */
-    public function cleanup(int $hours = 24): int
+    public function cleanup(int $hours = 24, OutputInterface $output = null): int
     {
         $date = new \DateTime();
         $date->sub(new \DateInterval("PT{$hours}H"));
         $callback = function ($select) use ($date) {
             $select->where->lessThan('last_login', $date->format('Y-m-d H:i:s'));
         };
+
+        $this->invalidatedSessions = 0;
+        if ($this->isLogoutEnabled()) {
+            $userIds = [];
+            foreach ($this->userTable->select($callback) as $user) {
+                $userIds[] = (int)$user['id'];
+            }
+            $this->invalidatedSessions = $this->sessionInvalidator
+                ->invalidateForUsers($userIds, $output);
+        }
 
         $cleanUpFields = isset($this->mainConfig->CleanUp)
             ? $this->mainConfig->CleanUp->toArray()
@@ -128,6 +162,17 @@ class CleanUpUserDataCommand extends Command
             ];
 
         return $this->userTable->update($cleanUpFields, $callback);
+    }
+
+    /**
+     * Should affected users be logged out as part of cleanup?
+     *
+     * @return bool
+     */
+    private function isLogoutEnabled(): bool
+    {
+        return !isset($this->mainConfig->Logout->enabled)
+            || (bool)$this->mainConfig->Logout->enabled;
     }
 
     /**
@@ -156,8 +201,11 @@ class CleanUpUserDataCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output) {
         $hours = $input->getOption('hours') ?? $this->getDefaultHours();
-        $cleanedUpRows = $this->cleanup($hours);
-        $output->writeln("{$cleanedUpRows} row(s) in user table cleaned up successfully. ({$hours} hours)");
+        $cleanedUpRows = $this->cleanup($hours, $output);
+        $output->writeln(
+            "{$cleanedUpRows} row(s) in user table cleaned up successfully. ({$hours} hours) "
+            . "{$this->invalidatedSessions} session(s) invalidated."
+        );
         return 0;
     }
 }

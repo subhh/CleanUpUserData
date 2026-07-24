@@ -5,7 +5,7 @@
  *
  * PHP version 7
  *
- * Copyright (C) Villanova University 2020.
+ * Copyright (C) Qcovery 2026.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -69,6 +69,7 @@ class CleanUpUserDataCommandFactory implements FactoryInterface
         return new $requestedName(
             $container->get(\VuFind\Db\Table\PluginManager::class)->get('User'),
             $configLoader->get('CleanUpUserData'),
+            $container->get(\CleanUpUserData\Session\SessionInvalidator::class),
             ...($options ?? [])
         );
     }
