@@ -8,6 +8,11 @@
     "require-dev": {
         "vufind/vufind": "~10",
         "ahand/mobileesp": "dev-master"
+    },
+    "autoload": {
+        "psr-4": {
+            "CleanUpUserData\\": "src/CleanUpUserData/",
+            "CleanUpUserDataTest\\": "tests/iunit-tests/src/CleanUpUserDataTest/"
+        }
     }
 }
-    
