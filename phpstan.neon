@@ -1,0 +1,4 @@
+parameters:
+  bootstrapFiles:
+    - vufind-autoload.php
+    - vendor/autoload.php
