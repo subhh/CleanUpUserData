@@ -1,0 +1,13 @@
+{
+    "config": {
+        "platform": {
+            "php": "8.2"
+        },
+        "policy": false
+    },
+    "require-dev": {
+        "vufind/vufind": "~10",
+        "ahand/mobileesp": "dev-master"
+    }
+}
+    
