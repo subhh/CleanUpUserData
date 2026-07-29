@@ -7,7 +7,7 @@ test.phpstan:
 
 .PHONY: test.phpunit
 test.phpunit:
-	phpunit --bootstrap phpunit-bootstrap.php src
+	phpunit --bootstrap phpunit-bootstrap.php -c tests/unit-tests/phpunit.xml
 
 .PHONY: test.php-cs-fixer
 test.php-cs-fixer:
