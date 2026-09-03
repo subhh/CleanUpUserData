@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Factory for SessionInvalidator.
  *
@@ -50,9 +52,9 @@ class SessionInvalidatorFactory implements FactoryInterface
     /**
      * Create an object
      *
-     * @param ContainerInterface $container     Service manager
-     * @param string             $requestedName Service being created
-     * @param null|array         $options       Extra options (optional)
+     * @param ContainerInterface     $container     Service manager
+     * @param string                 $requestedName Service being created
+     * @param null|array<int, mixed> $options       Extra options (optional)
      *
      * @return object
      *
@@ -64,7 +66,7 @@ class SessionInvalidatorFactory implements FactoryInterface
     public function __invoke(
         ContainerInterface $container,
         $requestedName,
-        array $options = null
+        ?array $options = null
     ) {
         $mainConfig = $container->get(\VuFind\Config\PluginManager::class)->get('config');
         return new $requestedName(

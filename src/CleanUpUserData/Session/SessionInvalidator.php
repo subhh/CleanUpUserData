@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Invalidates active sessions belonging to specific users.
  *
@@ -123,7 +125,7 @@ class SessionInvalidator
             $userIdsToLogOut[$userId] = true;
         }
 
-        $backendType = strtolower((string)($this->sessionConfig->type));
+        $backendType = strtolower((string)($this->sessionConfig->get('type')));
 
         if ($backendType === 'database' || $backendType === 'mysqlsession') {
             return $this->invalidateDatabaseSessions($userIdsToLogOut);
@@ -144,7 +146,7 @@ class SessionInvalidator
      * Go through every row of the "session" database table, and destroy the
      * ones that belong to one of the users.
      *
-     * @param array $userIdsToLogOut Array of user ids built by invalidateForUsers().
+     * @param array<int, bool> $userIdsToLogOut Array of user ids built by invalidateForUsers().
      *
      * @return int Number of sessions that were destroyed
      */
@@ -171,7 +173,7 @@ class SessionInvalidator
      * Go through every session file on disk, and destroy the ones that
      * belong to one of the users.
      *
-     * @param array $userIdsToLogOut Lookup set built by invalidateForUsers().
+     * @param array<int, bool> $userIdsToLogOut Lookup set built by invalidateForUsers().
      *
      * @return int Number of sessions that were destroyed
      */

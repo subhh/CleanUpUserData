@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Factory for util/cleanup_user_data command.
  *
@@ -49,9 +51,9 @@ class CleanUpUserDataCommandFactory implements FactoryInterface
     /**
      * Create an object
      *
-     * @param ContainerInterface $container     Service manager
-     * @param string             $requestedName Service being created
-     * @param null|array         $options       Extra options (optional)
+     * @param ContainerInterface     $container     Service manager
+     * @param string                 $requestedName Service being created
+     * @param null|array<int, mixed> $options       Extra options (optional)
      *
      * @return object
      *
@@ -63,7 +65,7 @@ class CleanUpUserDataCommandFactory implements FactoryInterface
     public function __invoke(
         ContainerInterface $container,
         $requestedName,
-        array $options = null
+        ?array $options = null
     ) {
         $configLoader = $container->get(\VuFind\Config\PluginManager::class);
         return new $requestedName(

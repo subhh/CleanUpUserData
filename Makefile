@@ -3,13 +3,13 @@ test: test.phpstan test.phpunit test.php-cs-fixer
 
 .PHONY: test.phpstan
 test.phpstan:
-	phpstan --level=7 analyze src
+	vendor/bin/phpstan --level=7 analyze src
 
 .PHONY: test.phpunit
 test.phpunit:
-	phpunit --bootstrap phpunit-bootstrap.php -c tests/unit-tests/phpunit.xml
+	vendor/bin/phpunit --bootstrap phpunit-bootstrap.php -c tests/unit-tests/phpunit.xml
 
 .PHONY: test.php-cs-fixer
 test.php-cs-fixer:
-	php-cs-fixer --verbose check Module.php
-	php-cs-fixer --verbose check
+	vendor/bin/php-cs-fixer --verbose check Module.php
+	vendor/bin/php-cs-fixer --verbose check

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Console command: clean up user data.
  *
@@ -110,7 +112,8 @@ class CleanUpUserDataCommand extends Command
      *
      * @return void
      */
-    protected function configure() {
+    protected function configure()
+    {
         $this
             ->setDescription('User data cleaner')
             ->setHelp('Removes unneeded user data records from the database.')
@@ -180,7 +183,8 @@ class CleanUpUserDataCommand extends Command
      *
      * @return int hours to keep user data
      */
-    private function getDefaultHours() {
+    private function getDefaultHours()
+    {
         $defaultHours = 24;
         if (isset($this->mainConfig->Global->default_hours)
             && !empty($this->mainConfig->Global->default_hours)) {
@@ -199,7 +203,8 @@ class CleanUpUserDataCommand extends Command
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    protected function execute(InputInterface $input, OutputInterface $output) {
+    protected function execute(InputInterface $input, OutputInterface $output)
+    {
         $hours = $input->getOption('hours') ?? $this->getDefaultHours();
         $cleanedUpRows = $this->cleanup($hours, $output);
         $output->writeln(

@@ -81,9 +81,18 @@ class CleanUpUserDataCommandTest extends \PHPUnit\Framework\TestCase
         $adapter = $this->getMockBuilder(\Laminas\Db\Adapter\Adapter::class)
             ->disableOriginalConstructor()
             ->getMock();
+        $ilsAuthenticator = $this->getMockBuilder(\VuFind\Auth\ILSAuthenticator::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $capabilities = $this->getMockBuilder(\VuFind\Config\AccountCapabilities::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $favoritesService = $this->getMockBuilder(\VuFind\Favorites\FavoritesService::class)
+            ->disableOriginalConstructor()
+            ->getMock();
 
         $user = $this->getMockBuilder(\VuFind\Db\Row\User::class)
-            ->setConstructorArgs([$adapter])
+            ->setConstructorArgs([$adapter, $ilsAuthenticator, $capabilities, $favoritesService])
             ->onlyMethods(['save'])
             ->getMock();
 
